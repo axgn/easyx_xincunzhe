@@ -4,9 +4,7 @@
 #include "player.h"
 #include<ctime>
 #include<cstdlib>
-
-const int WINDOW_HEIGHT = 720;
-const int WINDOW_WIDTH = 1280;
+#include "const_val.h"
 
 class Enemy
 {
@@ -65,9 +63,11 @@ public:
 	bool CheckAlive();
 
 	void Draw(int delta);
+	
+	void increase_speed(int score);
 
 private:
-	const int SPEED = 4;
+	int SPEED = 4;
 	const int SHADOW_WIDTH = 48;
 	const int FRAME_HEIGHT = 80;
 	const int FRAME_WIDTH = 80;

@@ -57,3 +57,8 @@ bool Enemy::CheckAlive()
 {
 	return alive;
 }
+
+void Enemy::increase_speed(int score)
+{
+	SPEED += score / 10;
+}

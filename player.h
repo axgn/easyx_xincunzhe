@@ -1,5 +1,6 @@
 #pragma once
 #include "Amimation.h"
+#include "const_val.h"
 
 class Player
 {

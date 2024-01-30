@@ -17,6 +17,8 @@ public:
 
 	void Draw();
 
+protected:
+	virtual void OnClick() = 0;
 
 private:
 	enum class Status

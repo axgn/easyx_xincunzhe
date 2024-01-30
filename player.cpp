@@ -1,8 +1,5 @@
 #include "player.h"
 
-const int WINDOW_HEIGHT = 720;
-const int WINDOW_WIDTH = 1280;
-
 void Player::Draw(const int delta)
 {
 	int shadow_pos_x = position.x + (FRAME_WIDTH / 2) - (SHADOW_WIDTH / 2);

@@ -36,6 +36,15 @@
     <ClCompile Include="Button.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="StartGameButton.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="const_val.h">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="effect.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Amimation.h">
@@ -54,6 +63,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Button.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="StartGameButton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="eff.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

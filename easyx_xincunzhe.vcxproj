@@ -132,17 +132,22 @@
     <ClCompile Include="Atlas.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Button.cpp" />
+    <ClCompile Include="const_val.h" />
+    <ClCompile Include="effect.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="StartGameButton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Amimation.h" />
     <ClInclude Include="Atlas.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Button.h" />
+    <ClInclude Include="eff.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="StartGameButton.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

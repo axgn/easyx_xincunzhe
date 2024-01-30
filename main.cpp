@@ -8,6 +8,12 @@
 #include "mmsystem.h"
 #include<fstream>
 #include "Atlas.h"
+#include "const_val.h"
+#include "StartGameButton.h"
+#include "eff.h"
+
+bool running = true;
+bool is_game_started = false;
 
 #pragma comment(lib,"MSIMG32.LIB")
 #pragma comment(lib,"WINMM.LIB")
@@ -16,6 +22,7 @@ Atlas* atlas_player_left;
 Atlas* atlas_player_right;
 Atlas* atlas_enemy_left;
 Atlas* atlas_enemy_right;
+Atlas* atlas_white_player;
 
 void put_image_alpha(int x, int y, IMAGE* img)
 {
@@ -25,12 +32,15 @@ void put_image_alpha(int x, int y, IMAGE* img)
 		GetImageHDC(img), 0, 0, w, h, { AC_SRC_OVER,0,255,AC_SRC_ALPHA });
 }
 
-void TryGenerateEnemy(std::vector<Enemy*>& enemy_list)
+void TryGenerateEnemy(std::vector<Enemy*>& enemy_list,int score)
 {
 	const int INTERVAL = 100;
 	static int counter = 0;
 	if ((++counter) % INTERVAL == 0)
-		enemy_list.push_back(new Enemy(atlas_enemy_left,atlas_enemy_right));
+	{
+		enemy_list.push_back(new Enemy(atlas_enemy_left, atlas_enemy_right));
+		enemy_list.back()->increase_speed(score);
+	}
 }
 
 void UpdateBullets(std::vector<Bullet>& bullet_list, const Player& player)
@@ -65,10 +75,6 @@ int main()
 	mciSendString(_T("open mus/bgm.mp3 alias bgm"), NULL, 0, NULL);
 	mciSendString(_T("open mus/hit.wav alias hit"), NULL, 0, NULL);
 
-	mciSendString(_T("play bgm  repeat from 0"), NULL, 0, NULL);
-
-	bool running = true;
-
 	atlas_player_left = new Atlas(_T("img/player_left_%d.png"),6);
 	atlas_player_right = new Atlas(_T("img/player_right_%d.png"), 6);
 	atlas_enemy_left = new Atlas(_T("img/enemy_left_%d.png"), 6);
@@ -77,14 +83,47 @@ int main()
 	Player player(atlas_player_left, atlas_player_right);
 	ExMessage msg;
 	IMAGE img_background;
+	IMAGE img_menu;
 	std::vector<Enemy*> enemy_list;
 	std::vector<Bullet> bullet_list(3);
+	std::vector<IMAGE*> white_player;
+	for (int i = 0; i < 6; i++)
+	{
+		IMAGE* temp = new IMAGE(atlas_player_left->frame_list[i]->getwidth(), atlas_player_left->frame_list[i]->getheight());
+		turn_white(atlas_player_left->frame_list[i],temp);
+		white_player.push_back(temp);
+	}
+	atlas_white_player = new Atlas(white_player);
+	Player player_w(atlas_white_player,atlas_player_right);
+	
+	RECT region_btn_start_game, region_btn_quit_game;
+
+	region_btn_start_game.left = (WINDOW_WIDTH - BUTTON_WIDTH) / 2;
+	region_btn_start_game.right = region_btn_start_game.left + BUTTON_WIDTH;
+	region_btn_start_game.top = 430;
+	region_btn_start_game.bottom = region_btn_start_game.top + BUTTON_HEIGHT;
+	
+	region_btn_quit_game.left = (WINDOW_WIDTH - BUTTON_WIDTH) / 2;
+	region_btn_quit_game.right = region_btn_quit_game.left + BUTTON_WIDTH;
+	region_btn_quit_game.top = 550;
+	region_btn_quit_game.bottom = region_btn_quit_game.top + BUTTON_HEIGHT;
+
+	StartGameButton btn_start_game(region_btn_start_game,
+		_T("img/ui_start_idle.png"), _T("img/ui_start_hovered.png"), _T("img/ui_start_pushed.png"),is_game_started);
+	QuitGameButton btn_quit_game(region_btn_quit_game,
+		_T("img/ui_quit_idle.png"), _T("img/ui_quit_hovered.png"), _T("img/ui_quit_pushed.png"), running);
+
+
 	std::ifstream ifile("score.txt", std::ios::in);
 	int max_score = 0;
 	ifile >> max_score;
 	ifile.close();
 
 	loadimage(&img_background, _T("img/background.png"));
+	loadimage(&img_menu, _T("img/menu.png"));
+
+	IMAGE img_background2;
+	overturn(GetImageBuffer(&img_background), img_background.getwidth(), img_background.getheight(), &img_background2);
 
 	BeginBatchDraw();
 
@@ -92,72 +131,88 @@ int main()
 	{
 		DWORD start_time = GetTickCount();
 
-		while (peekmessage(&msg))
+		while (peekmessage(&msg,EX_MOUSE | EX_KEY))
 		{
-			player.Process_event(msg);
-		}
-
-		player.Move();
-
-		TryGenerateEnemy(enemy_list);
-		for (Enemy*& enemy : enemy_list)
-			enemy->Move(player);
-
-		for (Enemy*& enemy : enemy_list)
-		{
-			if (enemy->CheckPlayerCollision(player))
+			if(is_game_started)
+				player_w.Process_event(msg);
+			else
 			{
-				static TCHAR text[128];
-				_stprintf_s(text, _T("最终得分为：%d !"), score);
-				MessageBox(GetHWnd(), text, _T("游戏结束"), MB_OK);
-				std::ofstream ofile;
-				ofile.open("score.txt", std::ios::out);
-				if (max_score < score)
-				{
-					ofile << score;
-				}
-				ofile.close();
-				running = false;
-				break;
+				btn_quit_game.ProcessEvent(msg);
+				btn_start_game.ProcessEvent(msg);
 			}
 		}
-
-		UpdateBullets(bullet_list, player);
-
-		for (Enemy*& enemy : enemy_list)
+		if (is_game_started)
 		{
-			for (Bullet& bullet : bullet_list)
+			player_w.Move();
+
+			TryGenerateEnemy(enemy_list,score);
+			for (Enemy*& enemy : enemy_list)
+				enemy->Move(player_w);
+
+			for (Enemy*& enemy : enemy_list)
 			{
-				if (enemy->CheckBulletCollision(bullet))
+				if (enemy->CheckPlayerCollision(player_w))
 				{
-					enemy->Hurt();
-					mciSendString(_T("play hit  from 0"), NULL, 0, NULL);
-					score++;
+					static TCHAR text[128];
+					_stprintf_s(text, _T("最终得分为：%d !"), score);
+					MessageBox(GetHWnd(), text, _T("游戏结束"), MB_OK);
+					std::ofstream ofile;
+					ofile.open("score.txt", std::ios::out);
+					if (max_score < score)
+					{
+						ofile << score;
+					}
+					ofile.close();
+					running = false;
+					break;
 				}
 			}
-		}
-		for (size_t i = 0; i < enemy_list.size(); i++)
-		{
-			Enemy* enemy = enemy_list[i];
-			if (!enemy->CheckAlive())
+
+			UpdateBullets(bullet_list, player_w);
+
+			for (Enemy*& enemy : enemy_list)
 			{
-				std::swap(enemy_list[i], enemy_list.back());
-				enemy_list.pop_back();
-				i--;
-				delete enemy;
+				for (Bullet& bullet : bullet_list)
+				{
+					if (enemy->CheckBulletCollision(bullet))
+					{
+						enemy->Hurt();
+						mciSendString(_T("play hit  from 0"), NULL, 0, NULL);
+						score++;
+					}
+				}
+			}
+			for (size_t i = 0; i < enemy_list.size(); i++)
+			{
+				Enemy* enemy = enemy_list[i];
+				if (!enemy->CheckAlive())
+				{
+					std::swap(enemy_list[i], enemy_list.back());
+					enemy_list.pop_back();
+					i--;
+					delete enemy;
+				}
 			}
 		}
-
+		
 		cleardevice();
 
-		putimage(0, 0, &img_background);
-		player.Draw(1000 / 60);
-		for (Enemy*& enemy : enemy_list)
-			enemy->Draw(1000 / 60);
-		for (Bullet& bullet : bullet_list)
-			bullet.Draw();
-		DrawPlayerScore(score,max_score);
-
+		if (is_game_started)
+		{
+			putimage(0, 0, &img_background);
+			player_w.Draw(1000 / 60);
+			for (Enemy*& enemy : enemy_list)
+				enemy->Draw(1000 / 60);
+			for (Bullet& bullet : bullet_list)
+				bullet.Draw();
+			DrawPlayerScore(score, max_score);
+		}
+		else
+		{
+			putimage(0, 0, &img_menu);
+			btn_start_game.Draw();
+			btn_quit_game.Draw();
+		}
 		FlushBatchDraw();
 
 		DWORD end_time = GetTickCount();
@@ -173,6 +228,7 @@ int main()
 	delete atlas_player_right;
 	delete atlas_enemy_left;
 	delete atlas_enemy_right;
+	delete atlas_white_player;
 
 	EndBatchDraw();
 	return 0;

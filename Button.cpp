@@ -9,8 +9,15 @@ void Button::ProcessEvent(const ExMessage& msg)
 			status = Status::Hovered;
 		else if (status == Status::Hovered && !CheckCursorHit(msg.x, msg.y))
 			status = Status::Idle;
+		break;
 	case WM_LBUTTONDOWN:
-		if(CheckCursorHit(msg.x,msg.y))
+		if (CheckCursorHit(msg.x, msg.y))
+			status = Status::Pushed;
+		break;
+	case WM_LBUTTONUP:
+		if (status == Status::Pushed)
+			OnClick();
+		break;
 	}
 }
 

@@ -16,6 +16,12 @@ public:
 			frame_list.push_back(frame);
 		}
 	}
+
+	Atlas(std::vector<IMAGE*> white_player)
+	{
+		frame_list = white_player;
+	}
+	
 	~Atlas()
 	{
 		for (size_t i = 0; i < frame_list.size(); i++)
